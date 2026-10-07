@@ -1,15 +1,19 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from products.models import Product, ProductSize
 
-from .models import Cart, CartItem
+from .models import Cart, CartItem, Order, OrderItem
 from .serializers import (
     AddToCartSerializer,
     CartSerializer,
+    CheckoutSerializer,
+    OrderSerializer,
     UpdateQuantitySerializer,
+    unit_price,
 )
 
 
@@ -93,3 +97,74 @@ class CartItemDetailView(APIView):
     def delete(self, request, pk):
         self.get_item(request, pk).delete()
         return cart_response(request)
+
+class OrderListCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        orders = (
+            Order.objects.filter(user=request.user)
+            .prefetch_related('items')
+            .order_by('-created_at')
+        )
+        return Response(OrderSerializer(orders, many=True).data)
+
+    def post(self, request):
+        serializer = CheckoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            cart = Cart.objects.filter(user=request.user).first()
+            items = list(cart.items.select_related('product')) if cart else []
+            if not items:
+                return Response(
+                    {'detail': 'Your cart is empty.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Pass 1: lock the stock rows and check everything. No writes yet.
+            locked = []
+            for item in items:
+                size_obj = (
+                    ProductSize.objects.select_for_update()
+                    .filter(product=item.product, size=item.size)
+                    .first()
+                )
+                if (
+                    not item.product.is_active
+                    or not size_obj
+                    or item.quantity > size_obj.stock
+                ):
+                    return Response(
+                        {'detail': f'{item.product.name} ({item.size}) is out of stock or unavailable.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                locked.append((item, size_obj))
+
+            # Pass 2: everything is fine, so write.
+            total = sum(unit_price(i.product) * i.quantity for i in items)
+            order = Order.objects.create(
+                user=request.user, total=total, **serializer.validated_data
+            )
+            for item, size_obj in locked:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    product_name=item.product.name,
+                    size=item.size,
+                    quantity=item.quantity,
+                    price=unit_price(item.product),
+                )
+                size_obj.stock -= item.quantity
+                size_obj.save()
+            cart.items.all().delete()
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+
+
+class OrderDetailView(generics.RetrieveAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).prefetch_related('items')

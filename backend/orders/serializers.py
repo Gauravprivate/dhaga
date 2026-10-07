@@ -1,7 +1,7 @@
 from rest_framework import serializers
+from django.core.validators import RegexValidator
 
-from .models import Cart, CartItem
-
+from .models import Cart, CartItem, Order, OrderItem
 
 def unit_price(product):
     return product.discount_price or product.price
@@ -58,3 +58,37 @@ class AddToCartSerializer(serializers.Serializer):
 
 class UpdateQuantitySerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1)
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    line_total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product_name', 'size', 'quantity', 'price', 'line_total']
+
+    def get_line_total(self, obj):
+        return obj.price * obj.quantity
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'status', 'total', 'full_name', 'phone', 'address',
+            'city', 'pincode', 'created_at', 'items',
+        ]
+
+
+class CheckoutSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=100)
+    phone = serializers.CharField(
+        validators=[RegexValidator(r'^\d{10}$', 'Enter a 10-digit phone number.')]
+    )
+    address = serializers.CharField()
+    city = serializers.CharField(max_length=100)
+    pincode = serializers.CharField(
+        validators=[RegexValidator(r'^\d{6}$', 'Enter a 6-digit pincode.')]
+    )
