@@ -47,7 +47,7 @@ export default function ProductDetail() {
 
   const addToCart = async () => {
     if (!localStorage.getItem('access')) {
-      navigate('/login')
+      navigate('/login', { state: { from: `/products/${slug}` } })
       return
     }
     if (!size) {
