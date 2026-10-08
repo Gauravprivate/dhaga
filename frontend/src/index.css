@@ -1,0 +1,86 @@
+:root {
+  --bg: #faf8f5;
+  --ink: #1c1c1c;
+  --muted: #6b6560;
+  --accent: #b5654a;
+  --line: #e7e1d9;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+h1, h2, h3, .brand {
+  font-family: 'Playfair Display', serif;
+  font-weight: 500;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.site-nav {
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-size: 1.8rem;
+  letter-spacing: 0.05em;
+}
+
+.nav-link-custom {
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nav-link-custom:hover { color: var(--accent); }
+
+.hero {
+  padding: 4rem 0 2rem;
+  text-align: center;
+}
+
+.hero p {
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0.75rem auto 0;
+}
+
+.product-card { display: block; }
+
+.product-img-wrap {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #efeae3;
+}
+
+.product-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover img { transform: scale(1.05); }
+
+.badge-new {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+}
+
+.product-name { margin: 0.75rem 0 0.15rem; font-size: 0.95rem; }
+.product-category { color: var(--muted); font-size: 0.8rem; }
+.price-old { color: var(--muted); text-decoration: line-through; margin-left: 8px; font-size: 0.85rem; }
+.price-now { font-weight: 500; }
