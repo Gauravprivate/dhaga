@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { Alert, Button, Col, Container, Row, Spinner } from 'react-bootstrap'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../api'
+import { useCart } from '../CartContext'
 
 const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL']
 
 export default function ProductDetail() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const { setCart } = useCart()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -55,15 +57,18 @@ export default function ProductDetail() {
       return
     }
     try {
-      await api.post('/cart/items/', {
+      const res = await api.post('/cart/items/', {
         product_id: product.id,
         size,
         quantity,
       })
+      setCart(res.data)
       setMessage({ variant: 'success', text: 'Added to your cart.' })
-    } catch (err) {
-      const text = err.response?.data?.detail || 'Something went wrong.'
-      setMessage({ variant: 'danger', text })
+    } catch (error) {
+      setMessage({
+        variant: 'danger',
+        text: 'Unable to add product to cart.',
+      })
     }
   }
 

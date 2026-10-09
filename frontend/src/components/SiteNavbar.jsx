@@ -1,9 +1,11 @@
 import { Container, Navbar } from 'react-bootstrap'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
+import { useCart } from '../CartContext'
 
 export default function SiteNavbar() {
   const { user, logout } = useAuth()
+  const { cart } = useCart()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -20,6 +22,9 @@ export default function SiteNavbar() {
           <Link to="/" className="nav-link-custom">Shop</Link>
           {user ? (
             <>
+              <Link to="/cart" className="nav-link-custom">
+                Cart ({cart ? cart.item_count : 0})
+              </Link>
               <span className="nav-link-custom">
                 Hi, {user.first_name || user.username}
               </span>
