@@ -1,3 +1,10 @@
+import logging
+
+import razorpay
+from django.conf import settings
+from django.db.models import F
+
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
@@ -15,7 +22,13 @@ from .serializers import (
     UpdateQuantitySerializer,
     unit_price,
 )
+logger = logging.getLogger(__name__)
 
+
+def get_razorpay_client():
+    return razorpay.Client(
+        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+    )
 
 def cart_response(request, code=status.HTTP_200_OK):
     cart, _ = Cart.objects.get_or_create(user=request.user)
@@ -168,3 +181,104 @@ class OrderDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).prefetch_related('items')
+
+
+class CreatePaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk, user=request.user)
+        if order.status != 'pending':
+            return Response(
+                {'detail': 'This order cannot be paid.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        amount = int(order.total * 100)  # Razorpay wants paise, not rupees
+        try:
+            rp_order = get_razorpay_client().order.create({
+                'amount': amount,
+                'currency': 'INR',
+                'receipt': f'dhaga_order_{order.id}',
+            })
+        except Exception:
+            logger.exception('Razorpay order creation failed')
+            return Response(
+                {'detail': 'Could not start the payment. Please try again.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        order.razorpay_order_id = rp_order['id']
+        order.save(update_fields=['razorpay_order_id'])
+
+        return Response({
+            'key': settings.RAZORPAY_KEY_ID,
+            'razorpay_order_id': rp_order['id'],
+            'amount': amount,
+            'currency': 'INR',
+        })
+
+
+class VerifyPaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk, user=request.user)
+
+        if order.status == 'paid':
+            return Response(OrderSerializer(order).data)
+        if order.status != 'pending':
+            return Response(
+                {'detail': 'This order cannot be paid.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        params = {
+            'razorpay_order_id': request.data.get('razorpay_order_id', ''),
+            'razorpay_payment_id': request.data.get('razorpay_payment_id', ''),
+            'razorpay_signature': request.data.get('razorpay_signature', ''),
+        }
+        if not order.razorpay_order_id or params['razorpay_order_id'] != order.razorpay_order_id:
+            return Response(
+                {'detail': 'Payment does not match this order.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            get_razorpay_client().utility.verify_payment_signature(params)
+        except razorpay.errors.SignatureVerificationError:
+            return Response(
+                {'detail': 'Payment verification failed.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        order.status = 'paid'
+        order.razorpay_payment_id = params['razorpay_payment_id']
+        order.save(update_fields=['status', 'razorpay_payment_id'])
+        return Response(OrderSerializer(order).data)
+
+
+class CancelOrderView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        with transaction.atomic():
+            order = get_object_or_404(
+                Order.objects.select_for_update(), pk=pk, user=request.user
+            )
+            if order.status != 'pending':
+                return Response(
+                    {'detail': 'Only pending orders can be cancelled.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            for item in order.items.all():
+                if item.product_id:
+                    ProductSize.objects.select_for_update().filter(
+                        product_id=item.product_id, size=item.size
+                    ).update(stock=F('stock') + item.quantity)
+
+            order.status = 'cancelled'
+            order.save(update_fields=['status'])
+
+        return Response(OrderSerializer(order).data)

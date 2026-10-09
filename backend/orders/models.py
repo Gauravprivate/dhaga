@@ -44,6 +44,8 @@ class Order(models.Model):
     address = models.TextField()
     city = models.CharField(max_length=100)
     pincode = models.CharField(max_length=6)
+    razorpay_order_id = models.CharField(max_length=100, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
