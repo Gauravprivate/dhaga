@@ -213,3 +213,28 @@ a { color: inherit; text-decoration: none; }
 .checkout-form .form-control { border-radius: 0; border-color: var(--line); background: #fff; }
 .checkout-form .form-control:focus { border-color: var(--ink); box-shadow: none; }
 .order-wrap { max-width: 640px; }
+
+.order-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.order-id { font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+.status-badge {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+}
+.status-pending { color: #8a6d1d; border-color: #e4d3a1; background: #fbf5e3; }
+.status-paid, .status-delivered { color: #2f6b3e; border-color: #bcd8c3; background: #eaf5ed; }
+.status-shipped { color: #2b5a86; border-color: #bcd0e3; background: #eaf1f8; }
+.status-cancelled { color: #8c3b3b; border-color: #e3bcbc; background: #f8eaea; }

@@ -25,6 +25,7 @@ export default function SiteNavbar() {
               <Link to="/cart" className="nav-link-custom">
                 Cart ({cart ? cart.item_count : 0})
               </Link>
+              <Link to="/orders" className="nav-link-custom">Orders</Link>
               <span className="nav-link-custom">
                 Hi, {user.first_name || user.username}
               </span>

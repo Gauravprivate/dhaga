@@ -7,6 +7,7 @@ import ProductDetail from './pages/ProductDetail'
 import Register from './pages/Register'
 import Checkout from './pages/Checkout'
 import OrderSuccess from './pages/OrderSuccess'
+import Orders from './pages/Orders'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success/:id" element={<OrderSuccess />} />
+        <Route path="/orders" element={<Orders />} />
       </Routes>
     </>
   )
