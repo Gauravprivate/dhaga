@@ -14,7 +14,7 @@ A full-stack clothing store built with React, Django REST Framework and MySQL, w
 
 | Cart | Payment |
 |---|---|
-| ![Cart](docs/screenshots/cart.png) | ![Payment](docs/screenshots/payment.png) |
+| ![Cart](docs/screenshots/cart.png) | ![Payment](docs/screenshots/payments.png) |
 
 ![Orders](docs/screenshots/orders.png)
 
