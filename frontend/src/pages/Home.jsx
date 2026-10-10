@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Col, Container, Row, Spinner } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import api from '../api'
+import heroImg from '../assets/hero.jpg'
 
 const PAGE_SIZE = 12 // keep this equal to PAGE_SIZE in the Django settings
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL']
@@ -99,13 +100,19 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero">
-        <h1>Dhaga</h1>
-        <p>Simple, honest clothing. Made to be worn often.</p>
+            <section
+        className="hero-banner"
+        style={{ backgroundImage: `url(${heroImg})` }}
+      >
+        <div className="hero-overlay">
+          <h1>Dhaga</h1>
+          <p>Simple, honest clothing. Made to be worn often.</p>
+          <a href="#shop" className="hero-btn">Shop now</a>
+        </div>
       </section>
 
       <Container className="pb-5">
-        <div className="filter-bar">
+          <div className="filter-bar" id="shop">
           <div className="chips">
             <button
               type="button"

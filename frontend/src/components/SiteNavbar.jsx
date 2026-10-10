@@ -1,6 +1,9 @@
 import { Container, Navbar } from 'react-bootstrap'
+
 import { Link, useNavigate } from 'react-router-dom'
+
 import { useAuth } from '../AuthContext'
+
 import { useCart } from '../CartContext'
 
 export default function SiteNavbar() {
@@ -18,18 +21,27 @@ export default function SiteNavbar() {
       <Container className="d-flex justify-content-between align-items-center">
         <Link to="/" className="brand">Dhaga</Link>
 
-        <div className="d-flex align-items-center gap-4">
+        <div className="d-flex align-items-center flex-wrap gap-3 gap-md-4">
           <Link to="/" className="nav-link-custom">Shop</Link>
+
           {user ? (
             <>
               <Link to="/cart" className="nav-link-custom">
                 Cart ({cart ? cart.item_count : 0})
               </Link>
-              <Link to="/orders" className="nav-link-custom">Orders</Link>
-              <span className="nav-link-custom">
+
+              <Link to="/orders" className="nav-link-custom">
+                Orders
+              </Link>
+
+              <span className="nav-link-custom nav-greeting">
                 Hi, {user.first_name || user.username}
               </span>
-              <button className="nav-link-custom nav-btn" onClick={handleLogout}>
+
+              <button
+                className="nav-link-custom nav-btn"
+                onClick={handleLogout}
+              >
                 Logout
               </button>
             </>
