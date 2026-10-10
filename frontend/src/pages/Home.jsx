@@ -3,7 +3,7 @@ import { Col, Container, Row, Spinner } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import api from '../api'
 
-const PAGE_SIZE = 4 // keep this equal to PAGE_SIZE in the Django settings
+const PAGE_SIZE = 12 // keep this equal to PAGE_SIZE in the Django settings
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL']
 
 export default function Home() {
