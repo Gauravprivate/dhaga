@@ -238,3 +238,17 @@ a { color: inherit; text-decoration: none; }
 .status-paid, .status-delivered { color: #2f6b3e; border-color: #bcd8c3; background: #eaf5ed; }
 .status-shipped { color: #2b5a86; border-color: #bcd0e3; background: #eaf1f8; }
 .status-cancelled { color: #8c3b3b; border-color: #e3bcbc; background: #f8eaea; }
+
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+.order-actions .add-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 10px 28px;
+  color: #fff;
+}

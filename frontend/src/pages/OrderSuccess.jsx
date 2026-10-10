@@ -29,7 +29,7 @@ export default function OrderSuccess() {
   return (
     <Container className="py-5 order-wrap">
       <div className="text-center mb-4">
-        <h1 className="detail-title">Thank you, your order is placed</h1>
+        <h1 className="detail-title">Thank you, payment received</h1>
         <p className="detail-desc">
           Order #{order.id} · Status: {order.status}
         </p>

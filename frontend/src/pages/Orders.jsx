@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Container, Spinner } from 'react-bootstrap'
-import { Link, Navigate } from 'react-router-dom'
+import { Alert, Container, Spinner } from 'react-bootstrap'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import api from '../api'
 import { useAuth } from '../AuthContext'
+import { startPayment } from '../payment'
 
 const money = (v) => `₹${Number(v).toLocaleString('en-IN')}`
 
@@ -15,8 +16,11 @@ const formatDate = (iso) =>
 
 export default function Orders() {
   const { user, ready } = useAuth()
+  const location = useLocation()
   const [orders, setOrders] = useState(null)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState(location.state?.notice || '')
+  const [busyId, setBusyId] = useState(null)
 
   useEffect(() => {
     if (!user) return
@@ -25,6 +29,43 @@ export default function Orders() {
       .then((res) => setOrders(res.data))
       .catch(() => setError('Could not load your orders.'))
   }, [user])
+
+  const replaceOrder = (updated) =>
+    setOrders((list) => list.map((o) => (o.id === updated.id ? updated : o)))
+
+  const payNow = async (order) => {
+    setBusyId(order.id)
+    setNotice('')
+    try {
+      const outcome = await startPayment(order.id, user)
+      if (outcome === 'paid') {
+        const res = await api.get(`/orders/${order.id}/`)
+        replaceOrder(res.data)
+        setNotice('Payment received. Thank you!')
+      }
+    } catch (err) {
+      setNotice(
+        err.response?.data?.detail || err.message || 'Payment could not be completed.',
+      )
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const cancelOrder = async (order) => {
+    if (!window.confirm('Cancel this order?')) return
+    setBusyId(order.id)
+    setNotice('')
+    try {
+      const res = await api.post(`/orders/${order.id}/cancel/`)
+      replaceOrder(res.data)
+      setNotice('Order cancelled.')
+    } catch (err) {
+      setNotice(err.response?.data?.detail || 'Could not cancel the order.')
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   if (!ready) {
     return (
@@ -56,6 +97,7 @@ export default function Orders() {
   return (
     <Container className="py-5 order-wrap">
       <h1 className="detail-title mb-4">Your orders</h1>
+      {notice && <Alert variant="info">{notice}</Alert>}
 
       {orders.map((order) => (
         <div key={order.id} className="order-card">
@@ -82,6 +124,27 @@ export default function Orders() {
             <span>Total</span>
             <span>{money(order.total)}</span>
           </div>
+
+          {order.status === 'pending' && (
+            <div className="order-actions">
+              <button
+                type="button"
+                className="btn add-btn"
+                disabled={busyId === order.id}
+                onClick={() => payNow(order)}
+              >
+                {busyId === order.id ? 'Please wait...' : 'Pay now'}
+              </button>
+              <button
+                type="button"
+                className="link-btn"
+                disabled={busyId === order.id}
+                onClick={() => cancelOrder(order)}
+              >
+                Cancel order
+              </button>
+            </div>
+          )}
         </div>
       ))}
     </Container>
