@@ -92,6 +92,15 @@ DATABASES = {
     }
 }
 
+DB_SSL_CA = config('DB_SSL_CA', default='')
+
+if DB_SSL_CA:
+    DATABASES['default']['OPTIONS'] = {
+        'ssl': {
+            'ca': str(BASE_DIR / DB_SSL_CA)
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
